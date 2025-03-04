@@ -17,6 +17,19 @@ After setting up a new Python environment, install the required packages by runn
 pip install -r requirements.txt
 ```
 
+This codebase is designed to integrate with [Weights and Biases](https://wandb.ai/site/) for experiment tracking. To enable logging of training metrics, specify the following variables in `constants.py`:
+
+```
+WANDB_PROJECT = "<your wandb project name>"
+WANDB_MODE = "online"
+```
+
+If you prefer not to use Weights and Biases, disable logging by setting:
+
+```
+WANDB_MODE = "disabled"
+```
+
 ## 2. How to train PCAA 
 
 Our proposed architecture, PCAA (Point Cloud Adversarial Autoencoder), was trained and validated on `mmGait10`, a newly proposed dataset containing radar point cloud traces from 10 human subjects, each with three distinct walking modalities. The dataset can be downloaded [here](link/to/dataset).
