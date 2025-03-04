@@ -43,11 +43,11 @@ If needed the script can be easily modified to train just a subset of all the mo
 
 3. To check model performance on the open set classification problem, run `inference_PCAA.py`. Final model predictions and ground truth labels are stored in the model folder in the form of .npy files, and final metrics are stored in .json files. Additionally, confusion matrices for the open-set problem are produced and saved in in `figures/<run-name>`.
 
-4. In Figure 4 and 5 of our paper we also explore additional factors that could affect the final performance, namely the number of available points in the input point clouds, and specific walking manners of the subjects. Those results can be reproduced by simply running `train_pointsubsampling.py` and `inferene_scenarios.py` respectively. In this case, training and inference are performed in a single file. Model weights and final metrics are stored in the same fashion as point (2) and (3) of this list.
+4. In Figure 4 and 5 of our paper we also explore additional factors that could affect the final performance, namely the number of available points in the input point clouds, and specific walking manners of the subjects. Those results can be reproduced by simply running `train_pointsubsampling.py` and `inference_scenarios.py` respectively. In this case, training and inference are performed in a single file. Model weights and final metrics are stored in the same fashion as point (2) and (3) of this list.
 
 ## 3. How to train the baseline
 
-In our study we compare PCAA with the closest existing architecture that solves the open-set gait classification problem from radar traces, namely “Open-set Recognition based on Contrastive constraint and Ensemble based out-of-distribution Detection” (OR-CED).
+In our study we compare PCAA with the closest existing architecture that solves the open-set gait classification problem from radar traces, namely OR-CED. It was proposed in the following paper
 
 ```
 Yang, Yang, et al. "Multiscenario open-set gait recognition based on radar micro-Doppler signatures." IEEE Transactions on Instrumentation and Measurement 71 (2022): 1-13.
