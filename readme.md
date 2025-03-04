@@ -1,8 +1,8 @@
 # Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds
 
-This repository contains the implementation of the experimental results described in: `R. Mazzieri, J. Pegoraro and M. Rossi, "Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds" in [JournalNameHere], doi: [DOI here].` (available [here](link/to/paper)).
+This repository contains the implementation of the experimental results described in: `R. Mazzieri, J. Pegoraro and M. Rossi, "Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds" in [JournalNameHere], doi: [DOI here].` The paper is available [here](link/to/paper).
 
-All the experiments are implemented in **Python version 3.8.10**.
+All the experiments are implemented in **Python version 3.8.10** and are based on PyTorch.
 
 If you find our work and implementation useful for your research, please, cite us using the following BibTeX:
 ```
@@ -12,14 +12,14 @@ If you find our work and implementation useful for your research, please, cite u
 ```
 
 ## 1. Setup
-After setting up a new python environment, install the required packages by running:
+After setting up a new Python environment, install the required packages by running:
 ```
 pip install -r requirements.txt
 ```
 
 ## 2. How to train PCAA 
 
-Our proposed architecture, PCAA, was trained and validated on `mmGait10`, a newly proposed dataset containing radar point cloud traces from 10 human subjects, each with three distinct walking modalities. The dataset can be downloaded [here](link/to/dataset).
+Our proposed architecture, PCAA (Point Cloud Adversarial Autoencoder), was trained and validated on `mmGait10`, a newly proposed dataset containing radar point cloud traces from 10 human subjects, each with three distinct walking modalities. The dataset can be downloaded [here](link/to/dataset).
 
 Our results, reported in Section VI-B and VI-C of the paper, can be reproduced by training the model from scratch. To do so:
 
