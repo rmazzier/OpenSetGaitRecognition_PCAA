@@ -18,7 +18,7 @@ from utils import openness
 
 if __name__ == "__main__":
 
-    model_name_base = "CGAAE_npts_V4_"
+    model_name_base = "PCAA_npts_V4_"
     n_training_classes = [2, 4, 6, 8]
     n_points_subs = [50, 70, 90, 110, 130, 150]
     n_tests = 5

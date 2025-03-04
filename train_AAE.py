@@ -367,7 +367,7 @@ def train_CGAAE(config=constants.CONFIG):
 if __name__ == "__main__":
     from utils import openness
 
-    model_name_base = "CGAAE_TestOpenness_"
+    model_name_base = "PCAA_TestOpenness_"
     n_training_classes = [2, 4, 6, 8]
     n_tests = 5
     all_classes = list(range(len(MSRadarDataset.label_dict)))
