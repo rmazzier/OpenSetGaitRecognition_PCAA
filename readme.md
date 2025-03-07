@@ -4,11 +4,9 @@ This repository contains the implementation of the experimental results describe
 
 All the experiments are implemented in **Python version 3.8.10** and are based on PyTorch.
 
-If you find our work and implementation useful for your research, please, cite us using the following BibTeX:
+If you find our work and implementation useful for your research, please, cite us:
 ```
-@arxivrefhere
-
-@datasetrefhere
+Mazzieri, R., Pegoraro, J., & ROSSI, M. (2025). mmGait10 - Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds [Data set]. Zenodo. https://doi.org/10.5281/zenodo.14974386
 ```
 
 ## 1. Setup
@@ -32,7 +30,7 @@ WANDB_MODE = "disabled"
 
 ## 2. How to train PCAA 
 
-Our proposed architecture, PCAA (Point Cloud Adversarial Autoencoder), was trained and validated on `mmGait10`, a newly proposed dataset containing radar point cloud traces from 10 human subjects, each with three distinct walking modalities. The dataset can be downloaded [here](link/to/dataset).
+Our proposed architecture, PCAA (Point Cloud Adversarial Autoencoder), was trained and validated on `mmGait10`, a newly proposed dataset containing radar point cloud traces from 10 human subjects, each with three distinct walking modalities. The dataset can be downloaded [here](https://zenodo.org/records/14974386).
 
 Our results, reported in Section VI-B and VI-C of the paper, can be reproduced by training the model from scratch. To do so:
 
