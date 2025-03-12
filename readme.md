@@ -1,7 +1,7 @@
 # Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds
 
 This repository contains the implementation of the experiments presented in our paper "Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds".
-The article is currently under review. A link to a pre-print will be available soon.
+The article is currently under review. A preprint is available at [this link](https://arxiv.org/pdf/2503.07435).
 
 All the experiments are implemented in **Python version 3.8.10** and are based on PyTorch.
 
