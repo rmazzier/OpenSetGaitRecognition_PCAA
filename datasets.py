@@ -6,6 +6,7 @@ import torch
 import os
 from sklearn.model_selection import train_test_split
 import time
+from torchvision import transforms
 
 from dataset_generation import gen_crops_from_track_file, get_sorted_seq
 from utils import get_track_dict_from_crops, openness
@@ -483,31 +484,299 @@ class MSRadarDataset(torch.utils.data.Dataset):
 
     pass
 
+class MSRadarDatasetMD(torch.utils.data.Dataset):
+    label_dict = {
+        0: "target0",
+        1: "target1",
+        2: "target2",
+        3: "target3",
+        4: "target4",
+        5: "target5",
+        6: "target6",
+        7: "target7",
+        8: "target8",
+        9: "target9",
+    }
+
+    @staticmethod
+    def generate_splits(
+        train_classes=[],
+        train_ratio=0.8,
+        valid_ratio=0.1,
+        split_seed=0,
+        safe_mode=True,
+    ):
+    
+        
+        if safe_mode:
+            # Request input from user to confirm
+            print("Press ENTER to confirm, or CTRL+C to abort.")
+            input()
+
+        start_time = time.time()
+        train_dir = os.path.join(constants.GEN_DATA_PATH_MD, "train")
+        valid_dir = os.path.join(constants.GEN_DATA_PATH_MD, "valid")
+        test_dir = os.path.join(constants.GEN_DATA_PATH_MD, "test")
+        unseen_dir = os.path.join(constants.GEN_DATA_PATH_MD, "unseen")
+
+        unseen_classes = np.setdiff1d(
+            list(MSRadarDatasetMD.label_dict.keys()), train_classes
+        ).tolist()
+
+        opns = (
+            openness(
+                n_train=len(train_classes),
+                n_test=len(MSRadarDatasetMD.label_dict),
+            )
+            * 100
+        )
+
+        # create directories
+        os.makedirs(train_dir, exist_ok=True)
+        os.makedirs(valid_dir, exist_ok=True)
+        os.makedirs(test_dir, exist_ok=True)
+        os.makedirs(unseen_dir, exist_ok=True)
+
+        # empty them in case they already existed
+        [os.remove(os.path.join(train_dir, f)) for f in os.listdir(train_dir)]
+        [os.remove(os.path.join(valid_dir, f)) for f in os.listdir(valid_dir)]
+        [os.remove(os.path.join(test_dir, f)) for f in os.listdir(test_dir)]
+        [os.remove(os.path.join(unseen_dir, f))
+         for f in os.listdir(unseen_dir)]
+
+        assert train_ratio + valid_ratio < 1.0
+        test_ratio = 1 - train_ratio - valid_ratio
+
+        print(
+            f"[MD Dataset] Generating splits with the following parameters:\nTrain Classes: {train_classes}\nTrain ratio: {train_ratio}\nValid ratio: {valid_ratio}\nTest ratio: {test_ratio}\nSeed: {split_seed}"
+        )
+
+        if train_classes == []:
+            train_classes = list(MSRadarDatasetMD.label_dict.keys())
+
+        print("Generating Train, Valid and Test splits ....")
+        for subj_idx in tqdm(train_classes):
+            subject_dir = os.path.join(
+                constants.DATA_PATH_MD, MSRadarDatasetMD.label_dict[subj_idx]
+            )
+
+            all_scenarios = os.listdir(subject_dir)
+            assert [
+                s in ["free_walk", "hands_in_pocket", "smartphone"]
+                for s in all_scenarios
+            ]
+            for scenario in all_scenarios:
+                # Assert that the folder contains only files starting with "pc"
+                assert all(
+                    [
+                        x[:2] == "md"
+                        for x in np.array(
+                            os.listdir(os.path.join(subject_dir, scenario))
+                        )
+                    ]
+                ), "Invalid file in subject folder"
+
+                all_files = os.listdir(os.path.join(subject_dir, scenario))
+                all_mds = [f for f in all_files if f.endswith(".pt")]
+
+
+                train_tracks, valid_test_tracks = train_test_split(
+                    all_mds, train_size=train_ratio, random_state=split_seed
+                )
+                valid_tracks, test_tracks = train_test_split(
+                    valid_test_tracks,
+                    train_size=(valid_ratio / (valid_ratio + test_ratio)),
+                    random_state=split_seed,
+                )
+
+                for tracks_set, target_dir in [
+                    (train_tracks, train_dir),
+                    (valid_tracks, valid_dir),
+                    (test_tracks, test_dir),
+                ]:
+                    for filename in tracks_set:
+                        whole_md = torch.load(os.path.join(subject_dir, scenario, filename), weights_only=True)
+
+                        # Crop the microdoppler in smaller chunks `seq_length` and `crop_step` parameters
+                        ## Array of shape [128, n_crops, crop_length]
+                        if whole_md.shape[1] > constants.NSTEPS:
+                            cropped_mds_array = whole_md.unfold(dimension=1, size=constants.NSTEPS, step=constants.CROP_STEP)
+                            ## Swap first two dimensions so n_crops is the first one
+                            cropped_mds_array = cropped_mds_array.transpose(0,1)
+
+                            for crop_index in range(len(cropped_mds_array)):
+                                md_index = filename.split(".")[0][-3:]
+                                out_name = f"crop{crop_index}_subj{subj_idx}_{scenario}_track{md_index}.pt"
+                                torch.save(cropped_mds_array[crop_index],os.path.join(target_dir, out_name))
+                                
+                                # print(f"Saved {out_name}")
+
+        # # Generate the unknown part of the dataset
+
+        print("Generating unseen split ...")
+        for subj_idx in tqdm(unseen_classes):
+            subject_dir = os.path.join(
+                constants.DATA_PATH_MD, MSRadarDatasetMD.label_dict[subj_idx]
+            )
+            all_scenarios = os.listdir(subject_dir)
+
+            assert [
+                s in ["free_walk", "hands_in_pocket", "smartphone"]
+                for s in all_scenarios
+            ]
+
+            for scenario in all_scenarios:
+                # Assert that the folder contains only files starting with "md"
+                assert all(
+                    [
+                        x[:2] == "md"
+                        for x in np.array(
+                            os.listdir(os.path.join(subject_dir, scenario))
+                        )
+                    ]
+                ), "Invalid file in subject folder"
+
+                all_files = os.listdir(os.path.join(subject_dir, scenario))
+                all_mds = [f for f in all_files if f.endswith(".pt")]
+
+                for filename in all_mds:
+                    whole_md = torch.load(os.path.join(subject_dir, scenario, filename), weights_only=True)
+
+                    # Crop the microdoppler in smaller chunks `seq_length` and `crop_step` parameters
+                    ## Array of shape [128, n_crops, crop_length]
+                    if whole_md.shape[1] > constants.NSTEPS:
+                        cropped_mds_array = whole_md.unfold(dimension=1, size=constants.NSTEPS, step=constants.CROP_STEP)
+                        ## Swap first two dimensions so n_crops is the first one
+                        cropped_mds_array = cropped_mds_array.transpose(0,1)
+
+                        for crop_index in range(len(cropped_mds_array)):
+                            md_index = filename.split(".")[0][-3:]
+                            out_name = f"crop{crop_index}_subj{subj_idx}_{scenario}_track{md_index}.pt"
+                            torch.save(cropped_mds_array[crop_index],os.path.join(unseen_dir, out_name))
+
+
+        end_time = time.time()
+        # Print general stats at the end
+        print(
+            f"~ New MicroDoppler Dataset Split created! [Time needed: {(end_time - start_time):.3f}s.] ~")
+        print(f"-> Training set size: {len(os.listdir(train_dir))}")
+        print(f"-> Valid set size: {len(os.listdir(valid_dir))}")
+        print(f"-> Test set size: {len(os.listdir(test_dir))}")
+        print(f"-> Unseen set size: {len(os.listdir(unseen_dir))}")
+        print(f"-> Training Classes: {train_classes}")
+        print(f"-> Unseen Classes: {unseen_classes}")
+        print(f"Openness: {opns:.3f}%")
+        pass
+
+    def __init__(
+        self,
+        split: SPLIT,
+        subsample_factor=1.0,
+        imagenet_transform=True,
+        augmentation=True
+    ):
+        super().__init__()
+        self.filenames = []
+        self.labels = []
+        self.subsample_factor = subsample_factor
+        self.dataset_dir = os.path.join(constants.GEN_DATA_PATH_MD, split.value)
+
+
+        self.filenames = os.listdir(self.dataset_dir)
+        self.use_imagenet_transform = imagenet_transform
+        self.use_augmentation = augmentation
+
+        # Subsample if needed
+        if self.subsample_factor < 1.0:
+            print(
+                f"Warning: subsampling dataset with factor {self.subsample_factor}. This is only for debugging purposes and is not reproducible (no seed)"
+            )
+            self.filenames = np.random.choice(
+                self.filenames,
+                int(len(self.filenames) * self.subsample_factor),
+                replace=False,
+            )
+
+        # Get original labels: (same numbers as the one in TRAIN_CLASSES)
+        self.original_labels = [
+            MSRadarDataset.filename2subj(l) for l in self.filenames]
+        selected_classes = list(set(self.original_labels))
+
+        if split != SPLIT.UNSEEN:
+            if selected_classes == constants.TRAIN_CLASSES:
+                print(
+                    f"(WARNING) {split.value} dataset: mismatch between TRAIN_CLASSES constant and classes in generated data!!"
+                )
+        
+        elif split == SPLIT.UNSEEN:
+            if (
+                selected_classes
+                == np.setdiff1d(range(10), constants.TRAIN_CLASSES).tolist()
+            ):
+                print(
+                    f"(WARNING) {split.value} dataset: mismatch between TRAIN_CLASSES constant and classes in generated data!!"
+                )
+           
+
+        # ... But labels must go from 0 to num_classes
+        # if split in ["train", "valid", "test", "reid_pos"]:
+        lab_dict = {}
+        for i, c in enumerate(selected_classes):
+            lab_dict[c] = i
+        self.labels = np.array([lab_dict[j] for j in self.original_labels])
+
+        # Define normalization transform
+        imagenet_normalization = transforms.Normalize(
+            mean=[0.485, 0.456, 0.406], 
+            std=[0.229, 0.224, 0.225]
+        )
+
+        # Full transform: Resize + ToTensor + Normalize
+        self.imagenet_transform = transforms.Compose([
+            transforms.Resize((224, 224)),  
+            imagenet_normalization
+        ])
+
+        self.orced_transform = transforms.Compose([
+            transforms.Resize((28,28)), 
+        ])
+
+        self.augmentation_transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.ColorJitter(
+                brightness=0.2,  
+                contrast=0.2,    
+                saturation=0.2,  
+                hue=0.1
+            )
+        ])
+
+    def __len__(self):
+        return len(self.filenames)
+    
+    def __getitem__(self, idx):
+        path = os.path.join(self.dataset_dir, self.filenames[idx])
+        md = torch.load(path, weights_only=True).to(torch.float)
+
+        # Add channel dimension
+        md = torch.unsqueeze(md, 0)
+
+        ## Repeat 3 times along that direction to have 3 channels, as ResNet18 Expects
+        md = md.repeat(3,1,1)
+
+        if self.use_imagenet_transform:
+            md = self.imagenet_transform(md)
+        else:
+            md = self.orced_transform(md)
+            if self.use_augmentation:
+                md = self.augmentation_transform(md)
+
+        label = torch.tensor(self.labels[idx]).type(torch.LongTensor)
+
+        return md, label
+        
+
 
 if __name__ == "__main__":
-
-    # MSRadarDataset.generate_splits(
-    #     train_classes=constants.TRAIN_CLASSES,
-    #     train_ratio=0.8,
-    #     valid_ratio=0.1,
-    #     test_ratio=0.1,
-    #     seed=0,
-    # )
-
-    dd = MSRadarDataset(
-        SPLIT.TRAIN,
-        scenarios=[SCENARIO.FREE_WALK, SCENARIO.SMARTPHONE,
-                   SCENARIO.HANDS_IN_POCKETS],
-        sequential=False,
-        subsample_factor=1.0,
-    )
-
-    loader = torch.utils.data.DataLoader(
-        dd, batch_size=8, shuffle=True, num_workers=0, drop_last=False
-    )
-
-    print(len(loader))
-    for data, labels in loader:
-        print(data.shape)
-        print(labels.shape)
-        break
+    ## Just run test scripts here
+    pass
