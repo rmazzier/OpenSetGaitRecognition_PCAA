@@ -1,6 +1,21 @@
 # Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds
 
-This repository contains the implementation of the experiments presented in our paper "Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds", published in the IEEE Sensors Journal. It is available in early access at [this link](https://ieeexplore.ieee.org/document/11080220).
+This repository contains the implementation of the experiments presented in our paper "Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds". 
+It is available in early access at [this link](https://ieeexplore.ieee.org/document/11080220).
+
+If you find our work and implementation useful for your research, please cite us using the following BibTeX:
+```
+@ARTICLE{11080220,
+  author={Mazzieri, Riccardo and Pegoraro, Jacopo and Rossi, Michele},
+  journal={IEEE Sensors Journal}, 
+  title={Open-Set Gait Recognition from Sparse mmWave Radar Point Clouds}, 
+  year={2025},
+  volume={},
+  number={},
+  pages={1-1},
+  keywords={Point cloud compression;Radar;Feature extraction;Millimeter wave communication;Training;Gait recognition;Neural networks;Legged locomotion;Inference algorithms;Deep learning;Point cloud;mmWave Radar;Open Set Classification;Deep Learning},
+  doi={10.1109/JSEN.2025.3587503}}
+```
 
 All the experiments are implemented in **Python version 3.8.10** and are based on PyTorch.
 
